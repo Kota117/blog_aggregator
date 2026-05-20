@@ -9,17 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func handlerAddFeed(s *state, cmd command) error {
+func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.Args) != 2 {
 		return fmt.Errorf("Usage: %s <name> <url>", cmd.Name)
 	}
 	name := cmd.Args[0]
 	url := cmd.Args[1]
 
-	current_user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
-	if err != nil {
-		return err
-	}
 	now := time.Now().UTC()
 	feed, err := s.db.CreateFeed(context.Background(), database.CreateFeedParams{
 		ID:        uuid.New(),
@@ -27,14 +23,14 @@ func handlerAddFeed(s *state, cmd command) error {
 		UpdatedAt: now,
 		Name:      name,
 		Url:       url,
-		UserID:    current_user.ID,
+		UserID:    user.ID,
 	})
 	if err != nil {
 		return fmt.Errorf("Couldn't create feed: %w", err)
 	}
 
 	fmt.Println("Feed created successfully:")
-	printFeed(feed, current_user)
+	printFeed(feed, user)
 	fmt.Println()
 	fmt.Println("=====================================")
 
@@ -42,14 +38,14 @@ func handlerAddFeed(s *state, cmd command) error {
 		ID:        uuid.New(),
 		CreatedAt: now,
 		UpdatedAt: now,
-		UserID:    current_user.ID,
+		UserID:    user.ID,
 		FeedID:    feed.ID,
 	})
 	if err != nil {
-		return fmt.Errorf("%v couldn't follow feed %v: %w", current_user.Name, feed.Name, err)
+		return fmt.Errorf("%v couldn't follow feed %v: %w", user.Name, feed.Name, err)
 	}
 
-	fmt.Printf("%v is now following %v\n", current_user.Name, feed.Name)
+	fmt.Printf("%v is now following %v\n", user.Name, feed.Name)
 
 	return nil
 }
