@@ -17,12 +17,12 @@ func handlerFollow(s *state, cmd command) error {
 	url := cmd.Args[0]
 	feed, err := s.db.GetFeedByUrl(context.Background(), url)
 	if err != nil {
-		return err
+		return fmt.Errorf("Couldn't get feed: %w", err)
 	}
 
 	current_user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
 	if err != nil {
-		return err
+		return fmt.Errorf("Couldn't get user: %w", err)
 	}
 
 	now := time.Now().UTC()
@@ -34,7 +34,7 @@ func handlerFollow(s *state, cmd command) error {
 		FeedID:    feed.ID,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("%v couldn't follow feed %v: %w", current_user.Name, feed.Name, err)
 	}
 
 	fmt.Printf("feed: %v, user: %v\n", feed_follow.FeedName, feed_follow.UserName)
@@ -48,12 +48,12 @@ func handlerFollowing(s *state, cmd command) error {
 
 	current_user, err := s.db.GetUser(context.Background(), s.cfg.CurrentUserName)
 	if err != nil {
-		return err
+		return fmt.Errorf("Couldn't get user: %w", err)
 	}
 
 	feed_follows, err := s.db.GetFeedFollowsForUser(context.Background(), current_user.ID)
 	if err != nil {
-		return err
+		return fmt.Errorf("Couldn't get feeds being followed by %v: %w", current_user.Name, err)
 	}
 
 	for _, feed_follow := range feed_follows {
